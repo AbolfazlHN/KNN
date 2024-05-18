@@ -2,28 +2,14 @@ import numpy as np
 from collections import Counter
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
-
-
-def oglidos_distance(x,y):
-    distance = np.sqrt(np.sum(x - y)**2)
-    return distance
-
-
-# def index_sort(list):
-#     index_sort = []
-#     list1 = list.copy()
-#     list1.sort()
-#     for i in list1:
-#         index_sort.append(list.index(i))
-#     return index_sort
 
 
 
 class KNN:
 
-    def __init__(self, k):
+    def __init__(self, k, dist="o"):
         self.k= k
+        self.distance_ = dist
 
     def fit(self, xtrain, ytrain):
         self.xtrain = xtrain
@@ -37,7 +23,13 @@ class KNN:
 
             distance_list = []
             for x_train in self.xtrain:
-                distance = oglidos_distance(x_test, x_train)
+                if self.distance_ == "ch":
+                    distance = KNN.chebichof_distance(x_test, x_train)
+                elif self.distance_ == "m":
+                    distance = KNN.manhatan_distance(x_test, x_train)
+                else:
+                    distance = KNN.oglidos_distance(x_test, x_train)
+
                 distance_list.append(distance)
 
             indexes = np.argsort(distance_list)
@@ -61,19 +53,33 @@ class KNN:
 
         return (acc / len(predicted)) * 100
 
+    @classmethod
+    def oglidos_distance(self,x,y):
+        distance = np.sqrt(np.sum(x - y) ** 2)
+        return distance
+
+    @classmethod
+    def manhatan_distance(clsself, x, y):
+        distance = np.sum(np.abs(x - y))
+        return distance
+
+    @classmethod
+    def chebichof_distance(clsself, x, y):
+        distance = np.max(np.abs(x - y))
+        return distance
+
 
 
 df = pd.read_csv("Social_Network_Ads.csv")
-# df = df[["tenure", "income", "ed", "employ", "custcat"]]
 df = df[["Age", "EstimatedSalary", "Purchased"]]
 clas_name = "Purchased"
 
 X = np.array(list(zip(df["Age"], df["EstimatedSalary"])))
 Y = np.array(df[clas_name])
-x_train, x_test, y_train, y_test= train_test_split(X, Y, test_size=0.2)
+x_train, x_test, y_train, y_test= train_test_split(X, Y, test_size=0.2, random_state=10)
 
 
-model = KNN(5)
+model = KNN(5, "m")
 model.fit(x_train, y_train)
 predicted = model.predict(x_test)
 
